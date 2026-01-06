@@ -77,6 +77,8 @@ public sealed class BlobIngestService
 
     private async Task ProcessOutFile(BlobClient blobClient, string archivePrefix, CancellationToken ct)
     {
+        var doArchive = false;
+
         await using var stream = await blobClient.OpenReadAsync(cancellationToken: ct);
         await using var gzipStream = new GZipStream(stream, CompressionMode.Decompress);
         using var reader = new StreamReader(gzipStream);
@@ -101,8 +103,9 @@ public sealed class BlobIngestService
         {
             BulkInsertBinaryImporter(newReadings);
         }
-
-        await Archive(blobClient, archivePrefix, ct);
+        
+        if (doArchive)
+            await Archive(blobClient, archivePrefix, ct);
 
         // 👉 NYTT:
         //await PublishAggregationWorkItem(MeterValueInfo);
