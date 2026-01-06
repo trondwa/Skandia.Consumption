@@ -8,13 +8,9 @@ public static class MessageEndpoints
 {
     public static void MapMessageEndpoints(this WebApplication app)
     {
-        //app.MapPost("/api/eventgrid/ingest", HandleEventGridEvent)
-        //   .WithName("EventGridIngest");
+        app.MapPost("/api/eventgrid/ingest", HandleEventGridEvent)
+           .WithName("EventGridIngest");
 
-        app.MapPost("/api/eventgrid/ingest", () =>
-        {
-            return Results.Ok(new { test = "ok" });
-        });
 
         app.MapGet("/api/hello", () => Results.Text("Hello there", "text/plain"))
            .WithName("Hello");

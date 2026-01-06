@@ -1,7 +1,9 @@
 using Azure.Identity;
 using Azure.Storage.Blobs;
 using Skandia.Consumption.Ingest.Endpoints;
+using Skandia.Consumption.Ingest.Models;
 using Skandia.Consumption.Ingest.Services;
+using Skandia.DB;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +19,8 @@ builder.Services.AddLogging();
 
 builder.Services.AddSingleton(_ =>
     new BlobServiceClient(builder.Configuration["blobstorageuc-connectionstring"]));
+builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
+builder.Services.AddTransient<IRepository<MeterValueData>, Repository<MeterValueData>>();
 
 builder.Services.AddScoped<BlobIngestService>();
 
