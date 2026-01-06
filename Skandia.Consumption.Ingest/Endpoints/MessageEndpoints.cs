@@ -10,6 +10,9 @@ public static class MessageEndpoints
     {
         app.MapPost("/api/eventgrid/ingest", HandleEventGridEvent)
            .WithName("EventGridIngest");
+
+        app.MapGet("/api/hello", () => Results.Text("Hello there", "text/plain"))
+           .WithName("Hello");
     }
 
     private static async Task<IResult> HandleEventGridEvent(
