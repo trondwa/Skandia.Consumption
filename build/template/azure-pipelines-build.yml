@@ -1,0 +1,72 @@
+parameters:
+- name: stageName
+  default: ''
+- name: jobName
+  default: ''
+- name: appName
+  default: ''
+- name: resourceGroupName
+  default: ''
+- name: settingsBrand
+  default: ''
+- name: settingsEnvironment
+  default: ''
+- name: settingsKeyVault
+  default: ''
+- name: settingsTenantId
+  default: ''
+  
+stages:
+- stage: ${{ parameters.stageName }}
+  jobs:
+  - job: ${{ parameters.jobName }}
+    steps:
+
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        buildType: 'current'
+        artifactName: 'drop'
+        targetPath: '$(Pipeline.Workspace)/drop'
+    - task: AzureWebApp@1
+      inputs:
+        azureSubscription: 'SkandiaEnergi AzurePlan(4210c3d4-8d11-400c-adda-582e27357bb8)'
+        appType: 'webApp'
+        appName: ${{ parameters.appName }}
+        package: '$(Pipeline.Workspace)/drop'
+        runtimeStack: 'DOTNETCORE|6.0'
+
+
+    - task: AzureAppServiceSettings@1
+      inputs:
+        azureSubscription: 'SkandiaEnergi AzurePlan(4210c3d4-8d11-400c-adda-582e27357bb8)'
+        appName: ${{ parameters.appName }}
+        resourceGroupName: ${{ parameters.resourceGroupName }}
+        appSettings: |
+          [
+          {
+          "name":"ASPNETCORE_ENVIRONMENT",
+          "value":"${{ parameters.settingsEnvironment }}"
+          },
+          {
+          "name":"brand",
+          "value":"${{ parameters.settingsBrand }}"
+          },
+          {
+          "name":"db-connectionstring-name",
+          "value":"db-crm-connectionstring-novalidation"
+          },
+          {
+          "name":"LOG_LEVEL",
+          "value":"2"
+          },
+          {
+          "name":"VaultUri",
+          "value":"${{ parameters.settingsKeyVault }}"
+          },
+          {
+          "name":"tenantid",
+          "value":"${{ parameters.settingsTenantId }}"
+          }
+          ]
+
+              
