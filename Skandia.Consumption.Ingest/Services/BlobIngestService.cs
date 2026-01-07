@@ -30,19 +30,26 @@ public sealed class BlobIngestService
         _logger = logger;
     }
 
-    public async Task ProcessAsync(Uri blobUrl, CancellationToken ct = default)
+    public async Task ProcessAsync(Uri blobUri, CancellationToken ct = default)
     {
         var archivePrefix = "archive/";
         var archiveInPrefix = "archivein/";
 
-        var blobClient = new BlobClient(blobUrl);
-        var blobName = blobClient.Name;
+        var path = blobUri.AbsolutePath.TrimStart('/');
+        var parts = path.Split('/', 2);
+
+        var containerName = parts[0];
+        var blobName = parts[1];
+
+        var blobClient = _blobServiceClient
+            .GetBlobContainerClient(containerName)
+            .GetBlobClient(blobName);
 
         if (blobName.Contains("_Out") &&
             !blobName.Contains(archivePrefix) &&
             !blobName.Contains(archiveInPrefix))
         {
-            await ProcessOutFile(blobClient, archivePrefix, blobUrl, ct);
+            await ProcessOutFile(blobClient, archivePrefix, blobUri, ct);
         }
         else if (blobName.Contains("_In") &&
                  !blobName.Contains(archivePrefix) &&
