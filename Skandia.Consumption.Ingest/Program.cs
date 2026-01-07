@@ -17,8 +17,16 @@ if (!string.IsNullOrWhiteSpace(keyVaultUri))
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddLogging();
 
+//builder.Services.AddSingleton(_ =>
+//    new BlobServiceClient(builder.Configuration["blobstorageuc-connectionstring"]),);
+
 builder.Services.AddSingleton(_ =>
-    new BlobServiceClient(builder.Configuration["blobstorageuc-connectionstring"]));
+    new BlobServiceClient(
+        new Uri(builder.Configuration["blobstorageuc-connectionstring"]),
+        new DefaultAzureCredential()));
+
+
+
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 builder.Services.AddTransient<IRepository<MeterValueData>, Repository<MeterValueData>>();
 

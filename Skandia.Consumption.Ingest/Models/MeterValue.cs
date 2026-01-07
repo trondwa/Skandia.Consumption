@@ -36,6 +36,7 @@
     public class MeterValueItem
     {
         public DateTime hour { get; set; }
-        public decimal reading { get; set; }
+        public decimal value { get; set; }
+        public string sourcebloburl { get; set; }
     }
 }

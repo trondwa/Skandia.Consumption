@@ -42,7 +42,7 @@ public sealed class BlobIngestService
             !blobName.Contains(archivePrefix) &&
             !blobName.Contains(archiveInPrefix))
         {
-            await ProcessOutFile(blobClient, archivePrefix, ct);
+            await ProcessOutFile(blobClient, archivePrefix, blobUrl, ct);
         }
         else if (blobName.Contains("_In") &&
                  !blobName.Contains(archivePrefix) &&
@@ -75,7 +75,7 @@ public sealed class BlobIngestService
         }
     }
 
-    private async Task ProcessOutFile(BlobClient blobClient, string archivePrefix, CancellationToken ct)
+    private async Task ProcessOutFile(BlobClient blobClient, string archivePrefix, string blobUrl, CancellationToken ct)
     {
         var doArchive = false;
 
@@ -91,12 +91,12 @@ public sealed class BlobIngestService
         if (MeterValueInfo == null)
             return;
 
-        var newReadings = CreateMeterValuesDataObject(MeterValueInfo);
-        var oldReadings = await GetMeterValuesByMpid(newReadings.First().Mpid);
+        var newReadings = CreateMeterValuesDataObject(MeterValueInfo, blobUrl);
+        var oldReadings = await GetMeterValuesByMpid(blobUrl);
 
         newReadings = newReadings
             .Where(r => !oldReadings.Any(r2 =>
-                r2.Hour == r.Hour && r2.Value == r.Value))
+                r2.hour == r.Hour && r2.value == r.Value))
             .ToList();
 
         if (newReadings.Any())
@@ -130,7 +130,7 @@ public sealed class BlobIngestService
         } while (true);
     }
 
-    private static List<MeterValueData> CreateMeterValuesDataObject(MeterValueInfo MeterValueInfo)
+    private static List<MeterValueData> CreateMeterValuesDataObject(MeterValueInfo MeterValueInfo, string blobUrl)
     {
         var MeterValuesList = new List<MeterValueData>();
 
@@ -141,6 +141,7 @@ public sealed class BlobIngestService
             {
                 Created = DateTime.UtcNow,
                 Value = (decimal)MeterValue.Value,
+                 SourceBlobUrl = blobUrl,
                 Hour = MeterValue.Period.Start.TimeInOslo(),
                 Direction = MeterValue.Direction == 0 ? "In" : "Out",
                 Mpid = MeterValueInfo.MeteringPointId,
@@ -164,11 +165,11 @@ public sealed class BlobIngestService
         }
     }
 
-    private async Task<List<MeterValueData>> GetMeterValuesByMpid(string mpid)
+    private async Task<List<MeterValueItem>> GetMeterValuesByMpid(string sourceBlobUrl)
     {
         var conn = _meterValueRepository.UnitOfWork.GetConnection();
-        var sql = @$"select hour, value from consumption.raw_data where mpid = @mpid";
-        var result = await conn.QueryAsync<MeterValueData>(sql, new { mpid });
+        var sql = @$"select hour, value from consumption.raw_data where sourcebloburl = @sourceBlobUrl";
+        var result = await conn.QueryAsync<MeterValueItem>(sql, new { sourceBlobUrl });
 
         return result.ToList();
     }
