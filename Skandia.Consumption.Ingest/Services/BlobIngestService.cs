@@ -41,6 +41,10 @@ public sealed class BlobIngestService
         var containerName = parts[0];
         var blobName = parts[1];
 
+        _logger.LogWarning("BlobUrl from EventGrid: {BlobUrl}", blobUri.ToString());
+        _logger.LogWarning("Parsed containerName: {Container}", containerName);
+        _logger.LogWarning("Parsed blobName: {Blob}", blobName);
+
         var blobClient = _blobServiceClient
             .GetBlobContainerClient(containerName)
             .GetBlobClient(blobName);
@@ -49,7 +53,7 @@ public sealed class BlobIngestService
             !blobName.Contains(archivePrefix) &&
             !blobName.Contains(archiveInPrefix))
         {
-            await ProcessOutFile(blobClient, archivePrefix, blobUri, ct);
+            await ProcessOutFile(blobClient, archivePrefix, blobUri.ToString(), ct);
         }
         else if (blobName.Contains("_In") &&
                  !blobName.Contains(archivePrefix) &&
@@ -82,7 +86,7 @@ public sealed class BlobIngestService
         }
     }
 
-    private async Task ProcessOutFile(BlobClient blobClient, string archivePrefix, Uri blobUrl, CancellationToken ct)
+    private async Task ProcessOutFile(BlobClient blobClient, string archivePrefix, string blobUrl, CancellationToken ct)
     {
         var doArchive = false;
 
@@ -99,7 +103,7 @@ public sealed class BlobIngestService
             return;
 
         var newReadings = CreateMeterValuesDataObject(MeterValueInfo, blobUrl);
-        var oldReadings = await GetMeterValuesByMpid(blobUrl.ToString());
+        var oldReadings = await GetMeterValuesByMpid(blobUrl);
 
         newReadings = newReadings
             .Where(r => !oldReadings.Any(r2 =>
@@ -137,7 +141,7 @@ public sealed class BlobIngestService
         } while (true);
     }
 
-    private static List<MeterValueData> CreateMeterValuesDataObject(MeterValueInfo MeterValueInfo, Uri blobUrl)
+    private static List<MeterValueData> CreateMeterValuesDataObject(MeterValueInfo MeterValueInfo, string blobUrl)
     {
         var MeterValuesList = new List<MeterValueData>();
 
