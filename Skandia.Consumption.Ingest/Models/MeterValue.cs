@@ -23,7 +23,7 @@
     {
         public string Id { get; set; }
         public string MeteringPointId { get; set; }
-        public List<MeterValue> MeterValues { get; set; }
+        public List<MeterValue> MeterReadings { get; set; }
         public string Period { get; set; }
         public int Direction { get; set; }
         public DateTime LastUpdated { get; set; }

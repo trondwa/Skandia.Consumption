@@ -41,10 +41,6 @@ public sealed class BlobIngestService
         var containerName = parts[0];
         var blobName = parts[1];
 
-        _logger.LogWarning("BlobUrl from EventGrid: {BlobUrl}", blobUri.ToString());
-        _logger.LogWarning("Parsed containerName: {Container}", containerName);
-        _logger.LogWarning("Parsed blobName: {Blob}", blobName);
-
         var blobClient = _blobServiceClient
             .GetBlobContainerClient(containerName)
             .GetBlobClient(blobName);
@@ -145,7 +141,7 @@ public sealed class BlobIngestService
     {
         var MeterValuesList = new List<MeterValueData>();
 
-        foreach (var MeterValue in MeterValueInfo.MeterValues)
+        foreach (var MeterValue in MeterValueInfo.MeterReadings)
         {
             MeterValuesList.Add(
             new MeterValueData
