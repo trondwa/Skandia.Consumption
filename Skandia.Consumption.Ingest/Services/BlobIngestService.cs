@@ -30,12 +30,12 @@ public sealed class BlobIngestService
         _logger = logger;
     }
 
-    public async Task ProcessAsync(string blobUrl, CancellationToken ct = default)
+    public async Task ProcessAsync(Uri blobUrl, CancellationToken ct = default)
     {
         var archivePrefix = "archive/";
         var archiveInPrefix = "archivein/";
 
-        var blobClient = new BlobClient(new Uri(blobUrl));
+        var blobClient = new BlobClient(blobUrl);
         var blobName = blobClient.Name;
 
         if (blobName.Contains("_Out") &&
@@ -75,7 +75,7 @@ public sealed class BlobIngestService
         }
     }
 
-    private async Task ProcessOutFile(BlobClient blobClient, string archivePrefix, string blobUrl, CancellationToken ct)
+    private async Task ProcessOutFile(BlobClient blobClient, string archivePrefix, Uri blobUrl, CancellationToken ct)
     {
         var doArchive = false;
 
@@ -92,7 +92,7 @@ public sealed class BlobIngestService
             return;
 
         var newReadings = CreateMeterValuesDataObject(MeterValueInfo, blobUrl);
-        var oldReadings = await GetMeterValuesByMpid(blobUrl);
+        var oldReadings = await GetMeterValuesByMpid(blobUrl.ToString());
 
         newReadings = newReadings
             .Where(r => !oldReadings.Any(r2 =>
@@ -103,7 +103,7 @@ public sealed class BlobIngestService
         {
             BulkInsertBinaryImporter(newReadings);
         }
-        
+
         if (doArchive)
             await Archive(blobClient, archivePrefix, ct);
 
@@ -130,7 +130,7 @@ public sealed class BlobIngestService
         } while (true);
     }
 
-    private static List<MeterValueData> CreateMeterValuesDataObject(MeterValueInfo MeterValueInfo, string blobUrl)
+    private static List<MeterValueData> CreateMeterValuesDataObject(MeterValueInfo MeterValueInfo, Uri blobUrl)
     {
         var MeterValuesList = new List<MeterValueData>();
 
@@ -141,7 +141,7 @@ public sealed class BlobIngestService
             {
                 Created = DateTime.UtcNow,
                 Value = (decimal)MeterValue.Value,
-                 SourceBlobUrl = blobUrl,
+                SourceBlobUrl = blobUrl.ToString(),
                 Hour = MeterValue.Period.Start.TimeInOslo(),
                 Direction = MeterValue.Direction == 0 ? "In" : "Out",
                 Mpid = MeterValueInfo.MeteringPointId,

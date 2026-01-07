@@ -57,14 +57,21 @@ public static class MessageEndpoints
             // 2️⃣ Blob created
             if (eventType == "Microsoft.Storage.BlobCreated")
             {
-                var data = evt.GetProperty("data");
+                if (!evt.TryGetProperty("data", out var data) ||
+                    !data.TryGetProperty("url", out var urlProp))
+                {
+                    logger.LogError("BlobCreated event missing data.url");
+                    return Results.Ok();
+                }
 
-                var blobUrl = data.GetProperty("url").GetString();
-                var contentType = data.GetProperty("contentType").GetString();
+                var blobUrl = urlProp.GetString()?.Trim();
 
-                logger.LogInformation("Blob created: {BlobUrl}", blobUrl);
-
-                await ingestService.ProcessAsync(blobUrl);
+                if (!Uri.TryCreate(blobUrl, UriKind.Absolute, out var blobUri))
+                {
+                    logger.LogError("Invalid blob URL from Event Grid: '{BlobUrl}'", blobUrl);
+                    return Results.Ok();
+                }
+                await ingestService.ProcessAsync(blobUri);
             }
         }
 
