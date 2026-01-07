@@ -21,11 +21,7 @@ builder.Services.AddLogging();
 //    new BlobServiceClient(builder.Configuration["blobstorageuc-connectionstring"]),);
 
 builder.Services.AddSingleton(_ =>
-    new BlobServiceClient(
-        new Uri(builder.Configuration["blobstorageuc-connectionstring"]),
-        new DefaultAzureCredential()));
-
-
+    new BlobServiceClient(builder.Configuration["blobstorageuc-connectionstring"]));
 
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 builder.Services.AddTransient<IRepository<MeterValueData>, Repository<MeterValueData>>();
