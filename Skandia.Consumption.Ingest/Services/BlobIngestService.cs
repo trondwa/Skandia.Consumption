@@ -126,7 +126,7 @@ public sealed class BlobIngestService
                 Mpid = newReadings.First().Mpid,
                 FromHour = newReadings.Min(r => r.Hour),
                 ToHour = newReadings.Max(r => r.Hour),
-                Source = blobUrl
+                Source = source
             });
 
             if (doArchive)

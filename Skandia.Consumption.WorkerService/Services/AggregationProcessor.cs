@@ -32,6 +32,8 @@ public sealed class AggregationProcessor
 
         if (deliveryId > 0)
         {
+            // HOUR AGGREGATES
+
             var prices = await _dataStorage.GetPrices(
                                 deliveryId,
                                 message.FromHour,
@@ -63,6 +65,15 @@ public sealed class AggregationProcessor
                     deleteMessage = false;
                 }
             }
+
+            // DAILY AGGREGATES
+            await _dataStorage.InsertDailyAggregates(
+                                                    deliveryId,
+                                                    message.FromHour,
+                                                    message.ToHour);
+
+
+            // MONTHLY AGGREGATES
 
         }
         else

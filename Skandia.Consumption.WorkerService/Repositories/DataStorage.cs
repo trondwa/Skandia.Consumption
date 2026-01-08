@@ -98,7 +98,7 @@ public class DataStorage
                     price  = EXCLUDED.price,
                     consumption = EXCLUDED.consumption,
                     cost        = EXCLUDED.cost,
-                    actual      = EXCLUDED.actual,
+                    actual      = EXCLUDED.actual
                 ";
 
         await conn.ExecuteAsync(sql, new { hourAggregate.Created, 
@@ -111,5 +111,50 @@ public class DataStorage
                                            hourAggregate.Actual });
     }
 
+
+    public async Task InsertDailyAggregates(int deliveryId, DateTime fromHour, DateTime toHour)
+    {
+        var conn = _meterValueRepository.UnitOfWork.GetConnection();
+        var sql = @"INSERT INTO consumption.daily_aggregates (
+                        deliveryid,
+                        mpid,
+                        day,
+                        consumption,
+                        cost,
+                        actual,
+                        created
+                    )
+                    SELECT
+                        ha.deliveryid,
+                        ha.mpid,
+                        DATE(ha.hour)           AS day,
+                        SUM(ha.consumption)     AS consumption,
+                        SUM(ha.cost)            AS cost,
+                        BOOL_AND(ha.actual)     AS actual,
+                        now()
+                    FROM consumption.hour_aggregates ha
+                    WHERE ha.deliveryid = @deliveryId
+                      AND ha.hour >= @fromHour
+                      AND ha.hour <  @toHour
+                    GROUP BY
+                        ha.deliveryid,
+                        ha.mpid,
+                        DATE(ha.hour)
+                    ON CONFLICT (deliveryid, day)
+                    DO UPDATE SET
+                        mpid        = EXCLUDED.mpid,
+                        consumption = EXCLUDED.consumption,
+                        cost        = EXCLUDED.cost,
+                        actual      = EXCLUDED.actual,
+                        created     = now();
+                ";
+
+        await conn.ExecuteAsync(sql, new
+        {
+            deliveryId,
+            fromHour,
+            toHour
+        });
+    }
 
 }
