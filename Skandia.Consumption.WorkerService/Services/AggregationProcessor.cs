@@ -74,6 +74,14 @@ public sealed class AggregationProcessor
 
 
             // MONTHLY AGGREGATES
+            await _dataStorage.InsertMonthlyAggregates(
+                                                    deliveryId,
+                                                    message.FromHour,
+                                                    message.ToHour);
+
+            // CUSTOMER DETAILS
+            
+            //TODO:Implementer dette
 
         }
         else
@@ -84,12 +92,6 @@ public sealed class AggregationProcessor
 
 
 
-        // TODO:
-        // 1. Finn berørte timer
-        // 2. Reberegn hour_aggregates
-        // 3. Oppdater daily_aggregates
-        // 4. Oppdater monthly_aggregates
-        // 5. Oppdater customerdetails
 
         await Task.CompletedTask;
     }

@@ -87,14 +87,14 @@ public class DataStorage
                     @deliveryid,
                     @mpid,
                     @date,
-                    @price  ,
+                    @price,
                     @consumption,
                     @cost,
                     @actual
                 )
                 ON CONFLICT (mpid, date)
                 DO UPDATE SET
-                    created     = EXCLUDED.created;
+                    created     = EXCLUDED.created,
                     price  = EXCLUDED.price,
                     consumption = EXCLUDED.consumption,
                     cost        = EXCLUDED.cost,
@@ -127,22 +127,63 @@ public class DataStorage
                     SELECT
                         ha.deliveryid,
                         ha.mpid,
-                        DATE(ha.hour)           AS day,
+                        DATE(ha.date)           AS day,
                         SUM(ha.consumption)     AS consumption,
                         SUM(ha.cost)            AS cost,
                         BOOL_AND(ha.actual)     AS actual,
                         now()
                     FROM consumption.hour_aggregates ha
                     WHERE ha.deliveryid = @deliveryId
-                      AND ha.hour >= @fromHour
-                      AND ha.hour <  @toHour
+                      AND ha.date >= @fromHour
+                      AND ha.date <=  @toHour
                     GROUP BY
                         ha.deliveryid,
                         ha.mpid,
-                        DATE(ha.hour)
+                        DATE(ha.date)
                     ON CONFLICT (deliveryid, day)
                     DO UPDATE SET
                         mpid        = EXCLUDED.mpid,
+                        consumption = EXCLUDED.consumption,
+                        cost        = EXCLUDED.cost,
+                        actual      = EXCLUDED.actual,
+                        created     = now();
+                ";
+
+        await conn.ExecuteAsync(sql, new
+        {
+            deliveryId,
+            fromHour,
+            toHour
+        });
+    }
+
+    public async Task InsertMonthlyAggregates(int deliveryId, DateTime fromHour, DateTime toHour)
+    {
+        var conn = _meterValueRepository.UnitOfWork.GetConnection();
+        var sql = @"INSERT INTO consumption.monthly_aggregates (
+                        deliveryid,
+                        month,
+                        consumption,
+                        cost,
+                        actual,
+                        created
+                    )
+                    SELECT
+                        da.deliveryid,
+                        date_trunc('month', da.day)::date AS month,
+                        SUM(da.consumption)               AS consumption,
+                        SUM(da.cost)                      AS cost,
+                        BOOL_AND(da.actual)               AS actual,
+                        now()
+                    FROM consumption.daily_aggregates da
+                    WHERE da.deliveryid = @deliveryId
+                      AND da.day >= @fromHour
+                      AND da.day <=  @toHour
+                    GROUP BY
+                        da.deliveryid,
+                        date_trunc('month', da.day)
+                    ON CONFLICT (deliveryid, month)
+                    DO UPDATE SET
                         consumption = EXCLUDED.consumption,
                         cost        = EXCLUDED.cost,
                         actual      = EXCLUDED.actual,
