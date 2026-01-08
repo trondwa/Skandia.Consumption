@@ -25,11 +25,7 @@ public sealed class AggregationProcessor
         CancellationToken ct)
     {
 
-        var meterValues = await _dataStorage.GetMeterValuesAsync(
-            message.Mpid,
-            message.FromHour,
-            message.ToHour,
-            message.Source);
+        var meterValues = await _dataStorage.GetMeterValuesAsync(message.Source);
 
         var deleteMessage = true;
         var deliveryId = await _dataStorage.GetDeliveryId(message.Mpid);

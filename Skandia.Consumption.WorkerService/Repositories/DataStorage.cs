@@ -14,15 +14,10 @@ public class DataStorage
         _meterValueRepository = meterValueRepository;
     }
 
-    public async Task<IEnumerable<MeterValueData>> GetMeterValuesAsync(
-                string mpid,
-                DateTime from,
-                DateTime to,
-                string source)
+    public async Task<IEnumerable<MeterValueData>> GetMeterValuesAsync(string source)
     {
-        return await _meterValueRepository.GetAsync("WHERE Mpid = @mpid AND Hour >= @from AND Hour <= @to AND (SourceBlobUrl = @source || SourceBlobUrl IS NULL)",
-            new { mpid, from, to, source });
-
+        return await _meterValueRepository.GetAsync("WHERE source = @source",
+            new { source });
     }
 
     public async Task<int> GetDeliveryId(string mpid)
