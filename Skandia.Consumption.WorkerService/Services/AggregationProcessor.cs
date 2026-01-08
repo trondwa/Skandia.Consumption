@@ -24,7 +24,6 @@ public sealed class AggregationProcessor
         AggregationMessage message,
         CancellationToken ct)
     {
-
         var meterValues = await _dataStorage.GetMeterValuesAsync(message.Source);
 
         var deleteMessage = true;
