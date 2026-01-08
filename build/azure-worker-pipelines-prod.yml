@@ -1,0 +1,62 @@
+# ASP.NET Core (.NET Framework)
+# Build and test ASP.NET Core projects targeting the full .NET Framework.
+# Add steps that publish symbols, save build artifacts, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+trigger:
+- release
+
+pool:
+  vmImage: 'windows-2025'
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'ReleaseWorker'
+
+stages:
+- stage: Build
+  jobs:
+  - job: BuildJob
+    steps:
+
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'restore'
+        feedsToUse: 'select'
+        vstsFeed: '57492337-e739-4682-bb7c-ab8cbedfe94b'
+        includeNuGetOrg: true
+
+    - script: dotnet publish -o $(build.artifactStagingDirectory) -c $(buildConfiguration)
+      displayName: 'publish artifacts'
+    
+    - task: PublishPipelineArtifact@1
+      inputs:
+        targetPath: $(build.artifactStagingDirectory)
+        artifact: 'drop'
+        publishLocation: 'pipeline'
+
+
+- template: template/azure-pipelines-build.yml
+  parameters:
+    stageName: 'stage_deploy_to_skandia'
+    jobName: 'job_deploy_to_skandia'
+    appName: 'app-consumptionworker-skandia-prod'
+    resourceGroupName: 'rg-application-skandia-prod'
+    settingsBrand: 'skandiaenergi'
+    settingsEnvironment: 'Production'
+    settingsKeyVault: 'https://key-app-skandia-prod.vault.azure.net'
+    settingsTenantId: 'skandiaprod.onmicrosoft.com'
+    
+    
+# - template: template/azure-pipelines-build.yml
+#   parameters:
+#     stageName: 'stage_deploy_to_saga'
+#     jobName: 'job_deploy_to_saga'
+#     appName: 'app-consumption-saga-prod'
+#     resourceGroupName: 'rg-application-saga-prod'
+#     settingsBrand: 'sagaenergi'
+#     settingsEnvironment: 'Production'
+#     settingsKeyVault: 'https://key-app-saga-prod.vault.azure.net'
+#     settingsTenantId: 'sagaenergi.onmicrosoft.com'
+

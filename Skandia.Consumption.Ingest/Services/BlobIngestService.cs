@@ -6,6 +6,8 @@ using Dapper;
 using Npgsql;
 using Skandia.Consumption.Ingest.Extensions;
 using Skandia.Consumption.Ingest.Models;
+using Skandia.Consumption.Shared.Helpers;
+using Skandia.Consumption.Shared.Models;
 using Skandia.DB;
 using System.IO.Compression;
 using System.Reflection;
@@ -17,15 +19,18 @@ namespace Skandia.Consumption.Ingest.Services;
 public sealed class BlobIngestService
 {
     private readonly BlobServiceClient _blobServiceClient;
+    private readonly AggregationQueuePublisher _aggregationQueue;
     private readonly IRepository<MeterValueData> _meterValueRepository;
     private readonly ILogger<BlobIngestService> _logger;
 
     public BlobIngestService(
                                 BlobServiceClient blobServiceClient,
+                                AggregationQueuePublisher aggregationQueue,
                                 IRepository<MeterValueData> meterValueRepository,
                                 ILogger<BlobIngestService> logger)
     {
         _blobServiceClient = blobServiceClient;
+        _aggregationQueue = aggregationQueue;
         _meterValueRepository = meterValueRepository;
         _logger = logger;
     }
@@ -111,11 +116,26 @@ public sealed class BlobIngestService
             BulkInsertBinaryImporter(newReadings);
         }
 
-        if (doArchive)
-            await Archive(blobClient, archivePrefix, ct);
+        try
+        {
+            await _aggregationQueue.EnqueueAsync(
+            new AggregationMessage
+            {
+                Mpid = newReadings.First().Mpid,
+                FromHour = newReadings.Min(r => r.Hour),
+                ToHour = newReadings.Max(r => r.Hour),
+                Source = blobUrl
+            });
 
-        // 👉 NYTT:
-        //await PublishAggregationWorkItem(MeterValueInfo);
+            if (doArchive)
+                await Archive(blobClient, archivePrefix, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to enqueue aggregation message");
+            // ingest must proceed even if enqueue fails
+        }
+
     }
 
 
@@ -186,7 +206,7 @@ public sealed class BlobIngestService
     {
         var conn = (NpgsqlConnection)_meterValueRepository.UnitOfWork.GetConnection();
 
-        using (var writer = conn.BeginBinaryImport(GetBulkString(typeof(MeterValueData))))
+        using (var writer = conn.BeginBinaryImport(Storage.GetBulkString(typeof(MeterValueData))))
         {
             foreach (var dataRow in meterValues)
             {
@@ -203,26 +223,5 @@ public sealed class BlobIngestService
         }
     }
 
-    private static string GetBulkString(Type type)
-    {
-        var tableAttribute = (TableAttribute)Attribute.GetCustomAttribute(type, typeof(TableAttribute));
-        var tableName = tableAttribute.Name;
-        var schema = tableAttribute.Schema;
-
-        var sql = $"COPY {schema}.{tableName} (";
-
-        PropertyInfo[] properties = type.GetProperties();
-        foreach (PropertyInfo property in properties)
-        {
-            if (property.Name.ToLower() != "id")
-                sql += property.Name.ToLower() + ",";
-        }
-
-        sql = sql.TrimEnd(',');
-
-        sql += ") FROM STDIN (FORMAT BINARY)";
-
-        return sql;
-    }
 }
 

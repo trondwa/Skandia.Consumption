@@ -1,6 +1,6 @@
 ﻿using Dapper;
 
-namespace Skandia.Consumption.Ingest.Models;
+namespace Skandia.Consumption.Shared.Models;
 
 [Table("raw_data", Schema = "consumption")]
 public class MeterValueData
