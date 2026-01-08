@@ -197,7 +197,7 @@ public sealed class BlobIngestService
     private async Task<List<MeterValueItem>> GetMeterValuesByMpid(string mpid, DateTime fromHour, DateTime toHour)
     {
         var conn = _meterValueRepository.UnitOfWork.GetConnection();
-        var sql = @$"select hour, value from consumption.raw_data where mpid = @mpidmpid and hour >= @fromHour and hour <= @toHour";
+        var sql = @$"select hour, value from consumption.raw_data where mpid = @mpid and hour >= @fromHour and hour <= @toHour";
         var result = await conn.QueryAsync<MeterValueItem>(sql, new { mpid, fromHour, toHour });
 
         return result.ToList();
