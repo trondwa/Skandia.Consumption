@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+	 <OutputType>Exe</OutputType>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>dotnet-Skandia.Consumption.WorkerService-d2c6772d-a927-4675-a1f4-c1d5cbc60fab</UserSecretsId>
