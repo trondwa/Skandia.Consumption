@@ -103,7 +103,9 @@ public sealed class BlobIngestService
         if (MeterValueInfo == null)
             return;
 
-        var newReadings = CreateMeterValuesDataObject(MeterValueInfo, blobUrl);
+        var source = Guid.NewGuid().ToString();
+
+        var newReadings = CreateMeterValuesDataObject(MeterValueInfo, source);
         var oldReadings = await GetMeterValuesByMpid(blobUrl);
 
         newReadings = newReadings
@@ -157,7 +159,7 @@ public sealed class BlobIngestService
         } while (true);
     }
 
-    private static List<MeterValueData> CreateMeterValuesDataObject(MeterValueInfo MeterValueInfo, string blobUrl)
+    private static List<MeterValueData> CreateMeterValuesDataObject(MeterValueInfo MeterValueInfo, string source)
     {
         var MeterValuesList = new List<MeterValueData>();
 
@@ -168,7 +170,7 @@ public sealed class BlobIngestService
             {
                 Created = DateTime.UtcNow,
                 Value = (decimal)MeterValue.Value,
-                SourceBlobUrl = blobUrl.ToString(),
+                Source = source,
                 Hour = MeterValue.Period.Start.TimeInOslo(),
                 Direction = MeterValue.Direction == 0 ? "In" : "Out",
                 Mpid = MeterValueInfo.MeteringPointId,
@@ -212,7 +214,7 @@ public sealed class BlobIngestService
             {
                 writer.StartRow();
                 writer.Write(dataRow.Created);
-                writer.Write(dataRow.SourceBlobUrl);
+                writer.Write(dataRow.Source);
                 writer.Write(dataRow.Mpid);
                 writer.Write(dataRow.Direction);
                 writer.Write(dataRow.Hour);

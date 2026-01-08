@@ -10,8 +10,8 @@ public class MeterValueData
     public int Id { get; set; }
     [Column("created")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
-    [Column("sourcebloburl")]
-    public string SourceBlobUrl { get; set; }
+    [Column("source")]
+    public string Source { get; set; }
     [Column("mpid")]
     public string Mpid { get; set; }
     [Column("direction")]
