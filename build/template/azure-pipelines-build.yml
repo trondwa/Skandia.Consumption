@@ -52,7 +52,7 @@ stages:
           "value":"${{ parameters.settingsBrand }}"
           },
           {
-          "name":"db-connectionstring-name",
+          "name":"db_connectionstring_name",
           "value":"db-crm-connectionstring-novalidation"
           },
           {
