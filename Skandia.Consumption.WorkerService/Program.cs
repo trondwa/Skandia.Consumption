@@ -1,37 +1,48 @@
-using Azure.Identity;
-using Azure.Storage.Queues;
-using Skandia.Consumption.Shared.Models;
-using Skandia.Consumption.WorkerService.Repositories;
-using Skandia.Consumption.WorkerService.Services;
-using Skandia.Consumption.WorkerService.Workers;
-using Skandia.DB;
+using System;
 
-var builder = Host.CreateApplicationBuilder(args);
+Console.WriteLine("BOOT OK - worker starting");
 
-var keyVaultUri = Environment.GetEnvironmentVariable("VaultUri");
-if (!string.IsNullOrWhiteSpace(keyVaultUri))
+while (true)
 {
-    builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), new DefaultAzureCredential());
+    Console.WriteLine("WORKER ALIVE");
+    Thread.Sleep(5000);
 }
 
-builder.Services.AddSingleton(_ =>
-{
-    var connectionString =
-        builder.Configuration["blobstorageuc-connectionstring"];
 
-    var client = new QueueClient(
-        connectionString,
-        "aggregation-queue");
+//using Azure.Identity;
+//using Azure.Storage.Queues;
+//using Skandia.Consumption.Shared.Models;
+//using Skandia.Consumption.WorkerService.Repositories;
+//using Skandia.Consumption.WorkerService.Services;
+//using Skandia.Consumption.WorkerService.Workers;
+//using Skandia.DB;
 
-    client.CreateIfNotExists();
-    return client;
-});
+//var builder = Host.CreateApplicationBuilder(args);
 
-builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
-builder.Services.AddTransient<IRepository<MeterValueData>, Repository<MeterValueData>>();
-builder.Services.AddTransient<DataStorage>();
-builder.Services.AddScoped<AggregationProcessor>();
-builder.Services.AddHostedService<AggregationQueueWorker>();
+//var keyVaultUri = Environment.GetEnvironmentVariable("VaultUri");
+//if (!string.IsNullOrWhiteSpace(keyVaultUri))
+//{
+//    builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), new DefaultAzureCredential());
+//}
 
-var host = builder.Build();
-host.Run();
+//builder.Services.AddSingleton(_ =>
+//{
+//    var connectionString =
+//        builder.Configuration["blobstorageuc-connectionstring"];
+
+//    var client = new QueueClient(
+//        connectionString,
+//        "aggregation-queue");
+
+//    client.CreateIfNotExists();
+//    return client;
+//});
+
+//builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
+//builder.Services.AddTransient<IRepository<MeterValueData>, Repository<MeterValueData>>();
+//builder.Services.AddTransient<DataStorage>();
+//builder.Services.AddScoped<AggregationProcessor>();
+//builder.Services.AddHostedService<AggregationQueueWorker>();
+
+//var host = builder.Build();
+//host.Run();
