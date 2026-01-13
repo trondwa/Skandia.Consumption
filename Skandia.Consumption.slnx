@@ -4,11 +4,18 @@
     <BuildType Name="Release" />
     <BuildType Name="ReleaseWorker" />
   </Configurations>
+  <Project Path="Skandia.Consumption.Backfill/Skandia.Consumption.Backfill.csproj" Id="2ff0f081-e96c-4039-8a3e-22a590acd1c3">
+    <BuildType Solution="ReleaseWorker|*" Project="Release" />
+  </Project>
   <Project Path="Skandia.Consumption.Ingest/Skandia.Consumption.Ingest.csproj">
     <Build Solution="ReleaseWorker|*" Project="false" />
   </Project>
   <Project Path="Skandia.Consumption.Shared/Skandia.Consumption.Shared.csproj" Id="75195309-e53b-439a-9829-797dc4304917" />
-  <Project Path="Skandia.Consumption.WorkerService/Skandia.Consumption.WorkerService.csproj" Id="91ddb369-bf48-4d99-bcd6-623dacd66965">
+  <Project Path="Skandia.Consumption.Test/Skandia.Consumption.Test.csproj" Id="496b81b4-572d-4710-b49b-a8fa1ba47956">
+    <BuildType Solution="ReleaseWorker|*" Project="Release" />
+  </Project>
+  <Project Path="Skandia.Consumption.WorkerService/Skandia.Consumption.WorkerService.csproj" Id="44bcd4b4-77cc-4173-87de-9149fbf0a116">
+    <BuildType Solution="ReleaseWorker|*" Project="Release" />
     <Build Solution="Release|*" Project="false" />
   </Project>
 </Solution>

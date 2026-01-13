@@ -10,7 +10,6 @@ using Skandia.Consumption.Shared.Helpers;
 using Skandia.Consumption.Shared.Models;
 using Skandia.DB;
 using System.IO.Compression;
-using System.Reflection;
 using System.Text.Json;
 
 namespace Skandia.Consumption.Ingest.Services;
@@ -89,7 +88,7 @@ public sealed class BlobIngestService
 
     private async Task ProcessOutFile(BlobClient blobClient, string archivePrefix, string blobUrl, CancellationToken ct)
     {
-        var doArchive = false;
+        var doArchive = true;
 
         await using var stream = await blobClient.OpenReadAsync(cancellationToken: ct);
         await using var gzipStream = new GZipStream(stream, CompressionMode.Decompress);
@@ -116,27 +115,29 @@ public sealed class BlobIngestService
         if (newReadings.Any())
         {
             BulkInsertBinaryImporter(newReadings);
-        }
 
-        try
-        {
-            await _aggregationQueue.EnqueueAsync(
-            new AggregationMessage
+            try
             {
-                Mpid = newReadings.First().Mpid,
-                FromHour = newReadings.Min(r => r.Hour),
-                ToHour = newReadings.Max(r => r.Hour),
-                Source = source
-            });
+                await _aggregationQueue.EnqueueAsync(
+                new AggregationMessage
+                {
+                    Mpid = newReadings.First().Mpid,
+                    FromHour = newReadings.Min(r => r.Hour),
+                    ToHour = newReadings.Max(r => r.Hour),
+                    Source = source
+                });
 
-            if (doArchive)
-                await Archive(blobClient, archivePrefix, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to enqueue aggregation message");
+                // ingest must proceed even if enqueue fails
+            }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to enqueue aggregation message");
-            // ingest must proceed even if enqueue fails
-        }
+
+        if (doArchive)
+            await Archive(blobClient, archivePrefix, ct);
+
 
     }
 

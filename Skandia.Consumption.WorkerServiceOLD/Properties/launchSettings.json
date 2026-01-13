@@ -1,9 +1,9 @@
-{
+﻿{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
     "Skandia.Consumption.WorkerService": {
       "commandName": "Project",
-      "commandLineArgs": "--port 7274",
-      "launchBrowser": false,
+      "dotnetRunMessages": true,
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Production",
         "VaultUri": "https://key-app-skandia-prod.vault.azure.net/",
