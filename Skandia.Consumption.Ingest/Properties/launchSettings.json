@@ -7,7 +7,10 @@
       "launchBrowser": false,
       "applicationUrl": "http://localhost:5261",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "VaultUri": "https://key-app-skandia-prod.vault.azure.net/",
+        "db-connectionstring-name": "db-crm-connectionstring-novalidation",
+        "AzureWebJobsBlobStorageUC": "UseDevelopmentStorage=true"
       }
     },
     "https": {
@@ -18,7 +21,8 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Production",
         "VaultUri": "https://key-app-skandia-prod.vault.azure.net/",
-        "db-connectionstring-name": "db-crm-connectionstring-novalidation"
+        "db-connectionstring-name": "db-crm-connectionstring-novalidation",
+        "AzureWebJobsBlobStorageUC": "UseDevelopmentStorage=true"
       }
     }
   }

@@ -1,22 +1,30 @@
-<Project Sdk="Microsoft.NET.Sdk.Worker">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-	 <OutputType>Exe</OutputType>
-    <Nullable>enable</Nullable>
+    <AzureFunctionsVersion>v4</AzureFunctionsVersion>
+    <OutputType>Exe</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>dotnet-Skandia.Consumption.WorkerService-d2c6772d-a927-4675-a1f4-c1d5cbc60fab</UserSecretsId>
-    <Configurations>Debug;Release;ReleaseWorker</Configurations>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>ebc41fd7-e19e-49ba-8cff-daaf656f2050</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.4.0" />
     <PackageReference Include="Azure.Identity" Version="1.17.1" />
-    <PackageReference Include="Azure.Storage.Queues" Version="12.24.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.1" />
+    <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.23.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.51.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="2.50.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues" Version="5.5.3" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.0" />
+    <PackageReference Include="Skandia.DB" Version="1.0.0-CI-20250909-110018" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Skandia.Consumption.Shared\Skandia.Consumption.Shared.csproj" />
   </ItemGroup>
+
 </Project>

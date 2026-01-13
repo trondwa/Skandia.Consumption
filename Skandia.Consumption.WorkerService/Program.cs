@@ -1,48 +1,50 @@
-using System;
+using Azure.Identity;
+using Azure.Storage.Queues;
+using Microsoft.Azure.Functions.Worker.Builder;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Npgsql;
+using Skandia.Consumption.WorkerService.Repositories;
+using Skandia.Consumption.WorkerService.Services;
 
-Console.WriteLine("BOOT OK - worker starting");
 
-while (true)
+var builder = FunctionsApplication.CreateBuilder(args);
+
+var keyVaultUri = Environment.GetEnvironmentVariable("VaultUri");
+if (!string.IsNullOrWhiteSpace(keyVaultUri))
 {
-    Console.WriteLine("WORKER ALIVE");
-    Thread.Sleep(5000);
+    builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), new DefaultAzureCredential());    
 }
 
+builder.Services.AddSingleton<NpgsqlDataSource>(_ =>
+{
+    var connStr = Environment.GetEnvironmentVariable("db-crm-connectionstring-novalidation");
+    if (string.IsNullOrWhiteSpace(connStr))
+        throw new InvalidOperationException("db-crm-connectionstring-novalidation is not set");
 
-//using Azure.Identity;
-//using Azure.Storage.Queues;
-//using Skandia.Consumption.Shared.Models;
-//using Skandia.Consumption.WorkerService.Repositories;
-//using Skandia.Consumption.WorkerService.Services;
-//using Skandia.Consumption.WorkerService.Workers;
-//using Skandia.DB;
+   var dataSourceBuilder = new NpgsqlDataSourceBuilder(connStr);
+    return dataSourceBuilder.Build();
+});
 
-//var builder = Host.CreateApplicationBuilder(args);
+builder.Services.AddSingleton<InvalidQueueService>(sp =>
+{
+    var storageConn = Environment.GetEnvironmentVariable("AzureWebJobsBlobStorageUC");
 
-//var keyVaultUri = Environment.GetEnvironmentVariable("VaultUri");
-//if (!string.IsNullOrWhiteSpace(keyVaultUri))
-//{
-//    builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), new DefaultAzureCredential());
-//}
+    if (string.IsNullOrWhiteSpace(storageConn))
+        throw new InvalidOperationException("AzureWebJobsStorage is not set");
 
-//builder.Services.AddSingleton(_ =>
-//{
-//    var connectionString =
-//        builder.Configuration["blobstorageuc-connectionstring"];
+    var queueClient = new QueueClient(storageConn, "aggregation-invalid");
+    return new InvalidQueueService(queueClient);
+});
 
-//    var client = new QueueClient(
-//        connectionString,
-//        "aggregation-queue");
+builder.Services.AddMemoryCache();
 
-//    client.CreateIfNotExists();
-//    return client;
-//});
+builder.Services.AddSingleton<DataStorage>();
+builder.Services.AddSingleton<AggregationProcessor>();
+builder.Services.AddSingleton<ICacheService<decimal>, MemoryCacheService<decimal>>();
 
-//builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
-//builder.Services.AddTransient<IRepository<MeterValueData>, Repository<MeterValueData>>();
-//builder.Services.AddTransient<DataStorage>();
-//builder.Services.AddScoped<AggregationProcessor>();
-//builder.Services.AddHostedService<AggregationQueueWorker>();
+var app = builder.Build();
 
-//var host = builder.Build();
-//host.Run();
+app.Run();
+

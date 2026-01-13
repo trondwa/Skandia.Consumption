@@ -38,7 +38,6 @@ public static class MessageEndpoints
         {
             var eventType = evt.GetProperty("eventType").GetString();
 
-            // 1️⃣ Subscription validation (MÅ være med)
             if (eventType == "Microsoft.EventGrid.SubscriptionValidationEvent")
             {
                 var validationCode = evt
@@ -54,7 +53,6 @@ public static class MessageEndpoints
                 });
             }
 
-            // 2️⃣ Blob created
             if (eventType == "Microsoft.Storage.BlobCreated")
             {
                 if (!evt.TryGetProperty("data", out var data) ||
