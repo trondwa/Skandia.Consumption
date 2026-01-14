@@ -15,7 +15,7 @@ public class DataStorage
         _memoryCacheService = memoryCacheService;
     }
 
-    public async Task<int> GetDeliveryId(NpgsqlConnection conn, string mpid)
+    public async Task<int> GetDeliveryId(NpgsqlConnection conn, string mpid, DateTime toDate)
     {
         var sql = "SELECT max(id) FROM data.delivery d WHERE mpid = @mpid AND d.status = 2;";
         var deliveryId = await conn.ExecuteScalarAsync<int?>(sql, new { mpid });
@@ -23,8 +23,8 @@ public class DataStorage
         if (deliveryId.HasValue)
             return deliveryId.Value;
 
-        sql = "SELECT max(id) FROM data.delivery d WHERE mpid = @mpid AND d.status = 3 AND d.enddate > current_date - interval '30' day;";
-        deliveryId = await conn.ExecuteScalarAsync<int?>(sql, new { mpid });
+        sql = "SELECT max(id) FROM data.delivery d WHERE mpid = @mpid AND d.status in (3,33) AND d.enddate >= @toDate";
+        deliveryId = await conn.ExecuteScalarAsync<int?>(sql, new { mpid, toDate });
 
         if (deliveryId.HasValue)
             return deliveryId.Value;

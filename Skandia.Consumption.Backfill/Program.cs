@@ -50,7 +50,7 @@ string blobConnStr;
 string queueConnStr;
 string containerName;
 
-var ingestUrl = GetEnv("INGEST_URL") ?? "https://localhost:7228/api/eventgrid/ingest";
+var ingestUrl = GetEnv("INGEST_URL") ?? "https://app-consumption-skandia-prod.azurewebsites.net/api/eventgrid/ingest"; // "https://localhost:7228/api/eventgrid/ingest";
 var maxBlobs = int.TryParse(GetEnv("MAX_BLOBS"), out var m) ? m : 0;
 var maxRetries = int.TryParse(GetEnv("MAX_RETRIES"), out var r) ? r : 5;
 
