@@ -39,7 +39,7 @@ public sealed class AggregationProcessor
         openSw.Stop();
 
         var deliverySw = Stopwatch.StartNew();
-        var deliveryId = await _dataStorage.GetDeliveryId(conn, message.Mpid);
+        var deliveryId = await _dataStorage.GetDeliveryId(conn, message.Mpid, message.ToHour);
         deliverySw.Stop();
 
         if (deliveryId > 0)
@@ -84,8 +84,8 @@ public sealed class AggregationProcessor
 
                     foreach (var d in deliveries)
                     {
-                        var consumptionCostThisMonth = await _dataStorage.GetConsumptionData(conn, d.DeliveryId, ResolutionType.Month, new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1), DateTime.Today.AddDays(-1), d.PriceArea);
-                        var consumptionCostYesterday = await _dataStorage.GetConsumptionData(conn, d.DeliveryId, ResolutionType.Day, DateTime.Today.AddDays(-1), DateTime.Today.AddDays(-1), d.PriceArea);
+                        var consumptionCostThisMonth = await _dataStorage.GetConsumptionData(conn, d.DeliveryId, ResolutionType.Month, new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1), new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.DaysInMonth(DateTime.Today.Year, DateTime.Today.Month)), d.Products.Any() ? d.Products.First().ProductId : 0, (short)d.PriceArea);
+                        var consumptionCostYesterday = await _dataStorage.GetConsumptionData(conn, d.DeliveryId, ResolutionType.Day, DateTime.Today.AddDays(-1), DateTime.Today.AddDays(-1), d.Products.Any() ? d.Products.First().ProductId : 0, (short)d.PriceArea);
 
                         if (consumptionCostThisMonth.Any())
                         {

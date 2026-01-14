@@ -49,14 +49,14 @@ stages:
     settingsTenantId: 'skandiaprod.onmicrosoft.com'
     
     
-# - template: template/azure-pipelines-build.yml
-#   parameters:
-#     stageName: 'stage_deploy_to_saga'
-#     jobName: 'job_deploy_to_saga'
-#     appName: 'app-consumption-saga-prod'
-#     resourceGroupName: 'rg-application-saga-prod'
-#     settingsBrand: 'sagaenergi'
-#     settingsEnvironment: 'Production'
-#     settingsKeyVault: 'https://key-app-saga-prod.vault.azure.net'
-#     settingsTenantId: 'sagaenergi.onmicrosoft.com'
+ - template: template/azure-pipelines-build.yml
+   parameters:
+    stageName: 'stage_deploy_to_saga'
+    jobName: 'job_deploy_to_saga'
+    appName: 'app-consumption-saga-prod'
+    resourceGroupName: 'rg-application-saga-prod'
+    settingsBrand: 'sagaenergi'
+    settingsEnvironment: 'Production'
+    settingsKeyVault: 'https://key-app-saga-prod.vault.azure.net'
+    settingsTenantId: 'sagaenergi.onmicrosoft.com'
 

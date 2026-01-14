@@ -16,10 +16,9 @@ if (!string.IsNullOrWhiteSpace(keyVaultUri))
 {
     builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), new DefaultAzureCredential());    
 }
-
 builder.Services.AddSingleton<NpgsqlDataSource>(_ =>
 {
-    var connStr = Environment.GetEnvironmentVariable("db-crm-connectionstring-novalidation");
+    var connStr = builder.Configuration["db-crm-connectionstring-novalidation"];
     if (string.IsNullOrWhiteSpace(connStr))
         throw new InvalidOperationException("db-crm-connectionstring-novalidation is not set");
 
@@ -29,7 +28,7 @@ builder.Services.AddSingleton<NpgsqlDataSource>(_ =>
 
 builder.Services.AddSingleton<InvalidQueueService>(sp =>
 {
-    var storageConn = Environment.GetEnvironmentVariable("AzureWebJobsBlobStorageUC");
+    var storageConn = builder.Configuration["AzureWebJobsBlobStorageUC"]; 
 
     if (string.IsNullOrWhiteSpace(storageConn))
         throw new InvalidOperationException("AzureWebJobsStorage is not set");

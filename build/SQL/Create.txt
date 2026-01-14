@@ -1,0 +1,332 @@
+
+--drop table consumption.raw_data;
+--drop table consumption.hour_aggregates;
+--drop table consumption.daily_aggregates;
+--drop table consumption.monthly_aggregates;
+
+
+
+--SCRIPT TABLES START
+
+CREATE SCHEMA consumption AUTHORIZATION skandia;
+
+
+CREATE TABLE consumption.raw_data (
+    id BIGSERIAL,
+    created TIMESTAMP NOT NULL,
+    source TEXT NOT NULL,
+    mpid VARCHAR NOT NULL,
+    direction VARCHAR NOT NULL,
+    hour TIMESTAMP NOT NULL,
+    value NUMERIC NULL,
+    quality VARCHAR NOT NULL
+)
+PARTITION BY RANGE (hour);
+
+CREATE INDEX idx_raw_mpid_hour
+ON consumption.raw_data (mpid, hour);
+
+CREATE INDEX idx_raw_sourceblob
+ON consumption.raw_data (source);
+
+CREATE TABLE consumption.raw_data_default
+PARTITION OF consumption.raw_data DEFAULT;
+
+
+DO $$
+DECLARE
+    start_month DATE := DATE '2026-01-01';
+    end_month   DATE := DATE '2030-01-01'; -- exclusive upper bound
+    d           DATE;
+    part_name   TEXT;
+    from_date   DATE;
+    to_date     DATE;
+BEGIN
+    d := start_month;
+
+    WHILE d < end_month LOOP
+        from_date := d;
+        to_date := (d + INTERVAL '1 month')::DATE;
+
+        part_name := format('raw_data_%s', to_char(from_date, 'YYYY_MM'));
+
+        -- Create partition if not exists
+        EXECUTE format(
+            'CREATE TABLE IF NOT EXISTS consumption.%I PARTITION OF consumption.raw_data
+             FOR VALUES FROM (%L) TO (%L);',
+            part_name,
+            from_date::TEXT,
+            to_date::TEXT
+        );
+
+        d := to_date;
+    END LOOP;
+END $$;
+
+
+
+
+
+--HOUR AGGREGATES
+CREATE TABLE consumption.hour_aggregates (
+    created      TIMESTAMP NOT NULL DEFAULT now(),
+    deliveryid   INT4      NOT NULL,
+    mpid         VARCHAR   NOT NULL,
+    date         TIMESTAMP NOT NULL,
+    price        NUMERIC   NULL,
+    consumption  NUMERIC   NOT NULL,
+    cost         NUMERIC   NOT NULL,
+    actual       BOOL      NOT NULL,
+
+    CONSTRAINT pk_hour_aggregates
+        PRIMARY KEY (deliveryid, date)
+)
+PARTITION BY RANGE (date);
+
+
+CREATE INDEX idx_hour_aggregates_hour
+ON consumption.hour_aggregates (date);
+
+CREATE INDEX ix_hour_aggregates_deliveryid_date
+ON consumption.hour_aggregates (deliveryid, date);
+
+CREATE TABLE IF NOT EXISTS consumption.hour_aggregates_default
+PARTITION OF consumption.hour_aggregates DEFAULT;
+
+
+DO $$
+DECLARE
+    start_month DATE := DATE '2023-10-01';
+    end_month   DATE := DATE '2025-01-01'; -- exclusive upper bound
+    d           DATE;
+    part_name   TEXT;
+    from_date   DATE;
+    to_date     DATE;
+BEGIN
+    d := start_month;
+
+    WHILE d < end_month LOOP
+        from_date := d;
+        to_date := (d + INTERVAL '1 month')::DATE;
+
+        part_name := format('hour_aggregates_%s', to_char(from_date, 'YYYY_MM'));
+
+        -- Create partition if not exists
+        EXECUTE format(
+            'CREATE TABLE IF NOT EXISTS consumption.%I PARTITION OF consumption.hour_aggregates
+             FOR VALUES FROM (%L) TO (%L);',
+            part_name,
+            from_date::TEXT,
+            to_date::TEXT
+        );
+
+        d := to_date;
+    END LOOP;
+END $$;
+
+
+
+
+
+--DAILY AGGREGATES
+
+CREATE TABLE consumption.daily_aggregates (
+    created     TIMESTAMP NOT NULL DEFAULT now(),
+
+    deliveryid  INT4        NOT NULL,
+    mpid        VARCHAR     NOT NULL,
+    date         TIMESTAMP        NOT NULL,
+    consumption NUMERIC     NOT NULL,
+    cost        NUMERIC     NOT NULL,
+    actual      BOOLEAN     NOT NULL,
+    CONSTRAINT pk_daily_aggregates
+        PRIMARY KEY (deliveryid, date)
+);
+
+
+--MONTHLY AGGREGATES
+
+CREATE TABLE consumption.monthly_aggregates (
+    created     TIMESTAMP NOT NULL DEFAULT now(),
+    deliveryid  INT4        NOT NULL,
+    date       TIMESTAMP        NOT NULL,
+    consumption NUMERIC     NOT NULL,
+    cost        NUMERIC     NOT NULL,
+    actual      BOOLEAN     NOT NULL,
+
+    CONSTRAINT pk_monthly_aggregates
+        PRIMARY KEY (deliveryid, date)
+);
+
+
+--SCRIPT TABLES END
+
+
+
+
+
+
+-- CURRENT
+
+INSERT INTO consumption.hour_aggregates
+(created, deliveryid, mpid, "date", price, consumption, "cost", actual)
+select c.created, deliveryid, d.mpid, "date", null, c.consumption, "cost", actual from elkompis.consumptioncost c inner join data.delivery d on d.id = c.deliveryid where date >= '2026-08-01' and date < '2026-08-01';
+
+
+
+-- ARKIV
+
+INSERT INTO consumption.hour_aggregates
+(created, deliveryid, mpid, "date", price, consumption, "cost", actual)
+select c.created, deliveryid, d.mpid, "date", null, c.consumption, "cost", actual from elkompis.consumptioncostarchive c inner join data.delivery d on d.id = c.deliveryid where date >= '2025-10-01' and date < '2026-01-01';
+
+INSERT INTO consumption.hour_aggregates
+(created, deliveryid, mpid, "date", price, consumption, "cost", actual)
+select c.created, deliveryid, d.mpid, "date", null, c.consumption, "cost", actual from elkompis.consumptioncostarchive c inner join data.delivery d on d.id = c.deliveryid where date >= '2025-08-01' and date < '2025-10-01';
+
+INSERT INTO consumption.hour_aggregates
+(created, deliveryid, mpid, "date", price, consumption, "cost", actual)
+select c.created, deliveryid, d.mpid, "date", null, c.consumption, "cost", actual from elkompis.consumptioncostarchive c inner join data.delivery d on d.id = c.deliveryid where date >= '2025-06-01' and date < '2025-08-01';
+
+INSERT INTO consumption.hour_aggregates
+(created, deliveryid, mpid, "date", price, consumption, "cost", actual)
+select c.created, deliveryid, d.mpid, "date", null, c.consumption, "cost", actual from elkompis.consumptioncostarchive c inner join data.delivery d on d.id = c.deliveryid where date >= '2025-04-01' and date < '2025-06-01';
+
+INSERT INTO consumption.hour_aggregates
+(created, deliveryid, mpid, "date", price, consumption, "cost", actual)
+select c.created, deliveryid, d.mpid, "date", null, c.consumption, "cost", actual from elkompis.consumptioncostarchive c inner join data.delivery d on d.id = c.deliveryid where date >= '2025-02-01' and date < '2025-04-01';
+
+INSERT INTO consumption.hour_aggregates
+(created, deliveryid, mpid, "date", price, consumption, "cost", actual)
+select c.created, deliveryid, d.mpid, "date", null, c.consumption, "cost", actual from elkompis.consumptioncostarchive c inner join data.delivery d on d.id = c.deliveryid where date >= '2025-01-01' and date < '2025-02-01';
+
+
+
+
+INSERT INTO consumption.hour_aggregates
+(created, deliveryid, mpid, "date", price, consumption, "cost", actual)
+select c.created, deliveryid, d.mpid, "date", null, c.consumption, "cost", actual from elkompis.consumptioncostarchive c inner join data.delivery d on d.id = c.deliveryid where date >= '2024-10-01' and date < '2025-01-01';
+
+INSERT INTO consumption.hour_aggregates
+(created, deliveryid, mpid, "date", price, consumption, "cost", actual)
+select c.created, deliveryid, d.mpid, "date", null, c.consumption, "cost", coalesce(actual,true) from elkompis.consumptioncostarchive c inner join data.delivery d on d.id = c.deliveryid where date >= '2024-08-01' and date < '2024-10-01';
+
+INSERT INTO consumption.hour_aggregates
+(created, deliveryid, mpid, "date", price, consumption, "cost", actual)
+select c.created, deliveryid, d.mpid, "date", null, c.consumption, "cost", coalesce(actual,true) from elkompis.consumptioncostarchive c inner join data.delivery d on d.id = c.deliveryid where date >= '2024-06-01' and date < '2024-08-01';
+
+INSERT INTO consumption.hour_aggregates
+(created, deliveryid, mpid, "date", price, consumption, "cost", actual)
+select c.created, deliveryid,coalesce(d.mpid,'MANGLER'), "date", null, c.consumption, "cost", coalesce(actual,true) from elkompis.consumptioncostarchive c inner join data.delivery d on d.id = c.deliveryid where date >= '2024-04-01' and date < '2024-06-01';
+
+INSERT INTO consumption.hour_aggregates
+(created, deliveryid, mpid, "date", price, consumption, "cost", actual)
+select c.created, deliveryid, coalesce(d.mpid,'MANGLER'), "date", null, c.consumption, "cost", coalesce(actual,true) from elkompis.consumptioncostarchive c inner join data.delivery d on d.id = c.deliveryid where date >= '2024-02-01' and date < '2024-04-01';
+
+INSERT INTO consumption.hour_aggregates
+(created, deliveryid, mpid, "date", price, consumption, "cost", actual)
+select c.created, deliveryid, coalesce(d.mpid,'MANGLER'), "date", null, c.consumption, "cost", coalesce(actual,true) from elkompis.consumptioncostarchive c inner join data.delivery d on d.id = c.deliveryid where date >= '2024-01-01' and date < '2024-02-01';
+
+INSERT INTO consumption.hour_aggregates
+(created, deliveryid,mpid, "date", price, consumption, "cost", actual)
+select c.created, deliveryid, coalesce(d.mpid,'MANGLER'), "date", null, c.consumption, "cost", coalesce(actual,true) from elkompis.consumptioncostarchive c inner join data.delivery d on d.id = c.deliveryid where date >= '2023-10-01' and date < '2024-01-01';
+
+
+
+
+
+
+
+
+
+-- Fylle daily_aggregates
+
+DO $$
+DECLARE
+    d date := date '2023-10-01';
+    end_d date := date '2025-01-01';
+BEGIN
+    WHILE d < end_d LOOP
+        RAISE NOTICE 'Processing day %', d;
+
+        EXECUTE format($SQL$
+            INSERT INTO consumption.daily_aggregates (
+                deliveryid, mpid, date, consumption, cost, actual, created
+            )
+            SELECT
+                ha.deliveryid,
+                ha.mpid,
+                ha.date::date AS date,
+                SUM(ha.consumption),
+                SUM(ha.cost),
+                BOOL_AND(ha.actual),
+                now()
+            FROM consumption.hour_aggregates ha
+            WHERE ha.date >= %L
+              AND ha.date <  %L
+            GROUP BY ha.deliveryid, ha.mpid, ha.date::date
+        $SQL$, d, (d + interval '1 month')::date);
+
+        d := (d + interval '1 month')::date;
+    END LOOP;
+END $$;
+
+
+
+-- Fylle monthly_aggregates
+
+DO $$
+DECLARE
+    d date := date '2023-10-01';
+    end_d date := date '2025-01-01';
+BEGIN
+    WHILE d < end_d LOOP
+        RAISE NOTICE 'Processing month %', d;
+
+        EXECUTE format($SQL$
+            INSERT INTO consumption.monthly_aggregates (
+                deliveryid,
+                date,
+                consumption,
+                cost,
+                actual,
+                created
+            )
+            SELECT
+                da.deliveryid,
+                date_trunc('month', da.date)::date AS date,
+                SUM(da.consumption)               AS consumption,
+                SUM(da.cost)                      AS cost,
+                BOOL_AND(da.actual)               AS actual,
+                now()
+            FROM consumption.daily_aggregates da
+            WHERE da.date >= %L
+              AND da.date <  %L
+            GROUP BY
+                da.deliveryid,
+                date_trunc('month', da.date);
+        $SQL$, d, (d + interval '1 month')::date);
+
+        d := (d + interval '1 month')::date;
+    END LOOP;
+END $$;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
