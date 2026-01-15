@@ -35,6 +35,12 @@ public class DataStorage
         if (deliveryId.HasValue)
             return deliveryId.Value;
 
+        sql = "SELECT max(id) FROM data.delivery d WHERE mpid = @mpid AND d.status = 5 AND d.startdate < current_date + interval '1 days' AND d.startdate >= current_date - interval '30 days';";
+        deliveryId = await conn.ExecuteScalarAsync<int?>(sql, new { mpid });
+
+        if (deliveryId.HasValue)
+            return deliveryId.Value;
+
         return 0;
 
     }

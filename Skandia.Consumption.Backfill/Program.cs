@@ -39,7 +39,9 @@ static async Task<string> GetSecretAsync(string vaultUri, string secretName)
 //   MAX_MESSAGES (default 0 = no limit)
 //
 
-var vaultUri = "https://key-app-skandia-prod.vault.azure.net/";
+var brand = "saga";
+
+var vaultUri = $"https://key-app-{brand}-prod.vault.azure.net/";
 
 // Secret names (defaults)
 var kvBlobConnSecret = "AzureWebJobsBlobStorageUC";
@@ -50,7 +52,7 @@ string blobConnStr;
 string queueConnStr;
 string containerName;
 
-var ingestUrl = GetEnv("INGEST_URL") ?? "https://app-consumption-skandia-prod.azurewebsites.net/api/eventgrid/ingest"; // "https://localhost:7228/api/eventgrid/ingest";
+var ingestUrl = GetEnv("INGEST_URL") ?? $"https://app-consumption-{brand}-prod.azurewebsites.net/api/eventgrid/ingest"; // "https://localhost:7228/api/eventgrid/ingest";
 var maxBlobs = int.TryParse(GetEnv("MAX_BLOBS"), out var m) ? m : 0;
 var maxRetries = int.TryParse(GetEnv("MAX_RETRIES"), out var r) ? r : 5;
 
